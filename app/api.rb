@@ -21,7 +21,7 @@ class TestJwt < Sinatra::Application
   ########################################
   #### ALLOW ORIGIN ALSO IN CONFIG.RU ####
   ########################################
-  set :allow_origin, "http://127.0.0.1:5173 http://localhost:5173 https://client-six-sand.vercel.app/#/" # <== ALSO IN CONFIG.RU ::::::::
+  set :allow_origin, "http://127.0.0.1:5173 http://localhost:5173 https://client-six-sand.vercel.app" # <== ALSO IN CONFIG.RU ::::::::
   #set :allow_origin, "http://localhost:3000" # <== ALSO IN CONFIG.RU ::::::::
   set :allow_headers, "Access-Control-Allow-Origin,content-type,__auth__,Access-Control-Allow-Credentials"
   set :allow_methods, "GET, HEAD, POST, DELETE"
