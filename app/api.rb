@@ -29,7 +29,8 @@ class TestJwt < Sinatra::Application
     {
       :secure => true,
       :http_only => true,
-      :same_site => :lax
+      :same_site => :lax,
+      :path => '/'
     }
   end
   # set :jwt, ''
