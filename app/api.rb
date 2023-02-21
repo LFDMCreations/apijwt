@@ -28,7 +28,8 @@ class TestJwt < Sinatra::Application
   set :cookie_options do
     {
       :secure => true,
-      :same_site => :none
+      :http_only => true,
+      :same_site => :lax
     }
   end
   # set :jwt, ''
