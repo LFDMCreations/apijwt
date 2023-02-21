@@ -10,7 +10,7 @@ require_relative './jwt/Jwt.rb'
 set :server, %w[puma]
 set :sessions, false
 
-class TestJwt < Sinatra::Application
+class Auth < Sinatra::Base
 
   before do
     response.headers['Access-Control-Allow-Credentials'] = "true"
@@ -92,18 +92,13 @@ class TestJwt < Sinatra::Application
           halt 401, { 'Content-Type' => 'text/plain' }, 'La ressource n\'est pas accessible.'
         else
           if UserJWT.verify(request.env['HTTP___AUTH__']) == false
-            token = request.env["HTTP_COOKIE"].split('=')[1]
-            if UserJwtRefresh.verify(token)
-              user_id = UserJwtRefresh.verify(token)
-              jwt = getjwt(user_id)
-              puts "I have issued a new jwt"
-              headers '__auth__' => jwt
-            else
-              halt 401, { 'Content-Type' => 'text/plain' }, 'problème token.'
-            end
+            redirect "http://localhost:5173"
           end
         end
+
       end
+
+
     end
 
     get '/cars' do
