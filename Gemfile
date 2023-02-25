@@ -1,8 +1,7 @@
-# frozen_string_literal: true
-
+#frozen_string_literal: true
 source "https://rubygems.org"
 
-ruby '3.1.3'
+ruby '3.2.1'
 gem 'sinatra','2.2.0'
 gem 'sinatra-contrib', '~> 2.1'
 
@@ -23,7 +22,7 @@ gem 'rake', '~> 11.2', '>= 11.2.2'
 gem 'jwt', '~> 2.3'
 gem 'sinatra-cors', '~> 1.2'
 
-gem 'rubocop', '~> 1.39', require: false
+#gem 'rubocop', '~> 1.39', require: false
 
 group :test, :development do
   gem 'racksh', '~> 1.0'

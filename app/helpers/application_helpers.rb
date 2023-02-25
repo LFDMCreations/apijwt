@@ -5,7 +5,3 @@ def json_status(code, *reason)
     :reason => reason[0]
   }.to_json
 end
-
-
-
-

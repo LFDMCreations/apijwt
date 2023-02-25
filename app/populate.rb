@@ -1,0 +1,5 @@
+DB.run("insert into users values (1, 'thiebo')")
+DB.run("insert into user_passwords values (1, 1, 'abc')")
+DB.run("insert into cars values (1, 1, 'mercedes', 'bayern', '20 000 €')")
+DB.run("insert into cars values (2, 1, 'peugeot', '205', '2 000 €')")
+DB.run("insert into cars values (3, 1, 'talbot', 'poire', '3 000 €')")

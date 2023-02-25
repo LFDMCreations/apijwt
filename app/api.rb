@@ -1,12 +1,11 @@
 require 'sinatra'
-require 'sinatra/cookies'
 require "sinatra/cors"
 require "sinatra/namespace"
 require 'jwt'
 
 require_relative './helpers/application_helpers.rb'
 require_relative './jwt/Jwt.rb'
-
+#require_relative './populate.rb'
 set :server, %w[puma]
 set :sessions, false
 
@@ -14,6 +13,7 @@ class TestJwt < Sinatra::Application
 
   before do
     response.headers['Access-Control-Allow-Credentials'] = "true"
+#    response.headers['Access-Control-Expose-Headers'] = ["__refresh__", "__auth__"]
     response.headers['Access-Control-Expose-Headers'] = "__auth__"
   end
     
@@ -25,20 +25,11 @@ class TestJwt < Sinatra::Application
   #set :allow_origin, "http://localhost:3000" # <== ALSO IN CONFIG.RU ::::::::
   set :allow_headers, "Access-Control-Allow-Origin,content-type,__auth__,Access-Control-Allow-Credentials"
   set :allow_methods, "GET, HEAD, POST, DELETE"
-  set :cookie_options do
-    {
-      :secure => true,
-      :http_only => true,
-      :same_site => :lax,
-      :path => '/'
-    }
-  end
-  # set :jwt, ''
 
   def getjwt(user_id)
     begin
       jwt = UserJWT.new(user_id)
-      jwt.duration = 30 # soit 2 minutes
+      jwt.duration = 3# soit 2secondes
       token = jwt.issue
       token
     rescue => exception
@@ -47,39 +38,46 @@ class TestJwt < Sinatra::Application
   end
 
   def login(client)
-    if client["name"] == "thiebald" && client ["password"] == "123"
-      return true
-    else
-      return false
-    end 
+    begin
+      user_id = User.find(name: client["name"])[:id]
+      passe = UserPassword.find(user_id: user_id)[:passe]
+      if passe
+        return user_id
+      else
+        return false
+      end
+    rescue => e
+      return e.message
+    end
   end
   
   namespace '/auth' do
 
     post '/login' do
-      #headers '__auth__' => 'jesuisunjwt'
       client = JSON.parse request.body.read
-      loggedIn = login client
-      if loggedIn == true
-        refresh = UserJwtRefresh.new(15).issue
-        jwt = getjwt(115)
-        cookies[:refresh] = refresh
+      user_id = login client
+      if user_id.class == Integer
+        jwt = getjwt(user_id)
+        refresh = UserJwtRefresh.new(user_id)
         headers '__auth__' => jwt
-        json_status 200, "success"
+        json_status 200, refresh.issue
       else
         json_status 409, "Erreur d'identification"
       end
     end
 
-    get '/getjwt' do
-      refresh = request.env['HTTP_COOKIE']
-      settings.jwt = getjwt(refresh)  
-      json_status 200, "bonjour"
-      #else
-       # json_status 409, "erreur"
-      #end
+    post '/getjwt' do
+      renouv = JSON.parse request.body.read
+      puts renouv
+      begin
+        user_id = UserJwtRefresh.verify(renouv)
+        jwt = getjwt(user_id)
+        headers '__auth__' => jwt
+        json_status 200, "success"
+      rescue => e
+        json_status 409, e.message
+      end
     end
-
   end
 
   namespace '/data' do
@@ -87,56 +85,32 @@ class TestJwt < Sinatra::Application
     before do
       
       unless request.env['REQUEST_METHOD'] == 'OPTIONS'
-        
-        # puts request.env['HTTP___AUTH__']
 
-        if request.env['HTTP___AUTH__'] == '' || !request.env['HTTP___AUTH__']
-          halt 401, { 'Content-Type' => 'text/plain' }, 'La ressource n\'est pas accessible.'
-        else
-          if UserJWT.verify(request.env['HTTP___AUTH__']) == false
-            token = request.env["HTTP_COOKIE"].split('=')[1]
-            if UserJwtRefresh.verify(token)
-              user_id = UserJwtRefresh.verify(token)
-              jwt = getjwt(user_id)
-              puts "I have issued a new jwt"
-              headers '__auth__' => jwt
-            else
-              halt 401, { 'Content-Type' => 'text/plain' }, 'problème token.'
-            end
+        begin
+          if request.env["HTTP___AUTH__"] == '' || !request.env["HTTP___AUTH__"]
+            halt 401, { 'Content-Type' => 'text/plain' }, 'La ressource n\'est pas accessible.'
           end
+          verification = UserJWT.verify(request.env["HTTP___AUTH__"])
+          unless verification.class == Integer
+            halt 409, { 'Content-Type' => 'application/json' }, {reason: verification}.to_json
+          end
+        rescue => e
+          halt 409, e.message  
         end
       end
     end
 
     get '/cars' do
-
-      cars = [
-        { id: 0, marque: "Peugeot", modele: "205" },
-        { id: 1, marque: "Renault", modele: "berline" },
-        { id: 2, marque: "Talbot", modele: "T26 Record" },
-      ]
-
-#     puts request.env['HTTP___AUTH__']
+      cars = DB[:cars].all
       json_status 200, cars
     end
 
     get '/car/:id' do
-      
-      cars = [
-        { id: 0, marque: "Peugeot", modele: "205", prix: "2 500 €" },
-        { id: 1, marque: "Renault", modele: "berline", prix: "45 000 €"  },
-        { id: 2, marque: "Talbot", modele: "T26 Record", prix: "35 000 €"  },
-      ]
-
-      car = cars.find{ |cc| cc[:id] == 0 }
-
+      puts params[:id]
+      car = Car[params[:id]].values
       json_status 200, car
-
     end
 
-    
   end
-
-
 
 end

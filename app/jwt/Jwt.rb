@@ -31,10 +31,10 @@ class UserJWT
       user = decoded_token[0]["user"]
     rescue JWT::VerificationError
       # return 'clef invalide'
-      return false
+      return "invalid signature"
     rescue JWT::ExpiredSignature
       # return 'durée expirée'
-      return false
+      return "expired token"
     end
   end
 
@@ -50,7 +50,7 @@ class UserJwtRefresh
   end
 
   def issue()
-    duration = Time.now.to_i + (60 * 60 * 24) # 1 minute for testing purpose
+    duration = Time.now.to_i + (60 * 60 * 24) # 1 day 
     payload = { user: @user, exp: duration }
     JWT.encode payload, @hmac_refresh, 'HS256'
   end
@@ -61,9 +61,9 @@ class UserJwtRefresh
       decoded_token = JWT.decode token, hmac_refresh, { algorithm: 'HS256' }
       @user = decoded_token[0]["user"]
     rescue JWT::VerificationError
-      return false
+      return 'Invalid signature'
     rescue JWT::ExpiredSignature
-      return false
+      return 'JWT expired'
     end
   end
 
